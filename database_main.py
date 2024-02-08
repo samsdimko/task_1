@@ -8,8 +8,8 @@ class Database:
     def __init__(self):
         try:
             self.connection = mysql.connector.connect(**CONNECTION_SETTINGS)
-        except:
-            raise ConnectionError
+        except mysql.connector.Error as e:
+            raise ConnectionError from e
         self.connection.close()
 
     def import_data(self, path: str, import_type: str):
@@ -24,12 +24,14 @@ class Database:
         self.connection.close()
 
     def get_import_query(self, query_type: str, query_data: dict) -> str:
-        if query_type == 'rooms':
-            return self.get_import_query_rooms(query_data)
-        elif query_type == 'students':
-            return self.get_import_query_students(query_data)
+        query_builders = {
+            'rooms': self.get_import_query_rooms,
+            'students': self.get_import_query_students
+        }
+        return query_builders[query_type](query_data)
 
-    def get_import_query_students(self, student_data: dict) -> str:
+    @staticmethod
+    def get_import_query_students(student_data: dict) -> str:
         base_query = 'INSERT INTO student_classes.students (id, birthday, name, roomId, sex) VALUES \n'
         values_query = ''
         for student in student_data:
@@ -39,7 +41,8 @@ class Database:
         query = base_query + values_query[1:]
         return query
 
-    def get_import_query_rooms(self, room_data: dict) -> str:
+    @staticmethod
+    def get_import_query_rooms(room_data: dict) -> str:
         base_query = 'INSERT INTO student_classes.rooms (id, name) VALUES \n'
         values_query = ''
         for room in room_data:
@@ -69,7 +72,8 @@ class Database:
         cursor.close()
         return data
 
-    def get_export_query(self, export_type) -> list[dict]:
+    @staticmethod
+    def get_export_query(export_type: str) -> str:
         if export_type == 'count':
             return queries.ROOMS_WITH_COUNT_STUDENTS_QUERY
         elif export_type == 'average':

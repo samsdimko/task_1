@@ -22,6 +22,6 @@ Logs:
 *.log
 local_settings.py
 
-*.env 
+*.env
 
 tmp/
