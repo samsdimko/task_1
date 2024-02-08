@@ -5,6 +5,9 @@ import queries
 
 
 class Database:
+    """
+    Class which is used as implementation for database usage
+    """
     def __init__(self):
         try:
             self.connection = mysql.connector.connect(**CONNECTION_SETTINGS)
@@ -12,11 +15,17 @@ class Database:
             raise ConnectionError from e
         self.connection.close()
 
-    def import_data(self, path: str, import_type: str):
+    def import_data(self, path: str, import_table: str):
+        """
+        Method to import data into database
+
+        :param path: path to import file
+        :param import_table: table to import
+        """
         self.connection.connect()
         with open(path, 'r') as f:
             data = json.load(f)
-        query = self.get_import_query(import_type, data)
+        query = self.get_import_query(import_table, data)
         cursor = self.connection.cursor()
         cursor.execute(query)
         cursor.close()
@@ -51,16 +60,22 @@ class Database:
         query = base_query + values_query[1:]
         return query
 
-    def export_data(self, path: str, export_type: str):
-        export_dict = dict()
-        if export_type == 'all':
-            for etype in EXPORT_TYPES:
-                export_dict[etype] = self.get_data_for_export(self.get_export_query(etype))
+    def export_data(self, path: str, export_report: str):
+        """
+        Method to import data into database
+
+        :param path: path to export file
+        :param export_report: type of report to export
+        """
+        export_data_dict = dict()
+        if export_report == 'all':
+            for export_type in EXPORT_TYPES:
+                export_data_dict[export_type] = self.get_data_for_export(self.get_export_query(export_type))
         else:
-            export_dict[export_type] = self.get_data_for_export(self.get_export_query(export_type))
+            export_data_dict[export_report] = self.get_data_for_export(self.get_export_query(export_report))
 
         with open(path, 'w') as f:
-            json.dump(export_dict, f)
+            json.dump(export_data_dict, f)
 
         self.connection.close()
 

@@ -7,21 +7,21 @@ logging.basicConfig(level=logging.INFO, filename="py_log.log", filemode="a",
                     format="%(asctime)s %(levelname)s %(message)s")
 
 
-def main(action_info: dict):
+def main(database_action_info: dict):
     database = database_main.Database()
 
-    if action_info['action'] == 'import':
+    if database_action_info['action'] == 'import':
         try:
-            database.import_data(action_info['rooms_path'], 'rooms')
-            database.import_data(action_info['students_path'], 'students')
+            database.import_data(database_action_info['rooms_path'], 'rooms')
+            database.import_data(database_action_info['students_path'], 'students')
             logging.info('Import is successful')
         except:
             logging.error('Import error')
             sys.exit(1)
 
-    elif action_info['action'] == 'export':
+    elif database_action_info['action'] == 'export':
         try:
-            database.export_data(action_info['export_path'], action_info['export_type'])
+            database.export_data(database_action_info['export_path'], database_action_info['export_type'])
             logging.info('Export is successful')
         except:
             logging.error('Export failed')
@@ -33,6 +33,6 @@ def main(action_info: dict):
 if __name__ == '__main__':
     logging.info('Started')
     logging.info('Input arguments: ' + ', '.join(sys.argv[1:]))
-    action_info = start_message()
-    logging.info('Settings: ' + str(action_info))
-    main(action_info)
+    database_action_info = start_message()
+    logging.info('Settings: ' + str(database_action_info))
+    main(database_action_info)

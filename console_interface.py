@@ -4,6 +4,13 @@ EXPORT_OPTIONS = {'all', 'dif', 'avg', 'count', 'sex'}
 
 
 def start_message():
+    """
+    This function is used at the start of script
+
+    It describes possible usage for different scenarios of database usage
+    for import/export
+
+    """
     if len(sys.argv) == 1:
         print('Write python main.py --help to get usage information')
         sys.exit(0)
