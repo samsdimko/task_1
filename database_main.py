@@ -89,11 +89,10 @@ class Database:
 
     @staticmethod
     def get_export_query(export_type: str) -> str:
-        if export_type == 'count':
-            return queries.get_count_query()
-        elif export_type == 'average':
-            return queries.get_avg_query()
-        elif export_type == 'difference':
-            return queries.get_dif_query()
-        elif export_type == 'sex':
-            return queries.get_sex_query()
+        query_selector = {
+            'count': queries.get_count_query,
+            'average': queries.get_avg_query,
+            'difference': queries.get_dif_query,
+            'sex': queries.get_sex_query
+        }
+        return query_selector[export_type]()

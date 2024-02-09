@@ -9,6 +9,7 @@ This project provides a command-line interface for interacting with a MySQL data
 **Data Export**: Enables exporting various reports based on the database content to a JSON file.
 
 **Installation**: Ensure Python and mysql-connector-python are installed.
+
 **Configuration**: In ```config.py```, set your MySQL connection details.
 
 ### **Import**:
