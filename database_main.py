@@ -90,10 +90,10 @@ class Database:
     @staticmethod
     def get_export_query(export_type: str) -> str:
         if export_type == 'count':
-            return queries.ROOMS_WITH_COUNT_STUDENTS_QUERY
+            return queries.get_count_query()
         elif export_type == 'average':
-            return queries.ROOMS_WITH_MIN_AVERAGE_AGE_QUERY
+            return queries.get_avg_query()
         elif export_type == 'difference':
-            return queries.ROOMS_WITH_MAXIMUM_DIFFERENCE_IN_AGE_QUERY
+            return queries.get_dif_query()
         elif export_type == 'sex':
-            return queries.ROOMS_WITH_BOTH_SEXES_QUERY
+            return queries.get_sex_query()
