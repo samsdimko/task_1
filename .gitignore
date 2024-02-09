@@ -24,4 +24,7 @@ local_settings.py
 
 *.env
 
+*.json
+!queries.json
+
 tmp/
