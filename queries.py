@@ -1,6 +1,5 @@
 import json
 
-
 def read_queries(func):
     with open('queries.json', 'r') as f:
         queries = json.load(f)
