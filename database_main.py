@@ -2,9 +2,10 @@ import mysql.connector
 from config import CONNECTION_SETTINGS, EXPORT_TYPES
 import json
 import queries
+import pandas as pd
 
 
-class Database:
+class Database(object):
     """
     Class which is used as implementation for database usage
     """
@@ -23,16 +24,22 @@ class Database:
         :param import_table: table to import
         """
         self.connection.connect()
-        with open(path, 'r') as f:
-            data = json.load(f)
-        query = self.get_import_query(import_table, data)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        chunks = pd.read_json(path, lines=True, chunksize=10000)
+        for chunk in chunks: 
+            query = self.get_import_query(import_table, chunk.to_dict('records'))
+            cursor.execute(query)
         cursor.close()
         self.connection.commit()
         self.connection.close()
 
-    def get_import_query(self, query_type: str, query_data: dict) -> str:
+    def get_import_query(self, query_type: str, query_data: list[dict]) -> str:
+        """
+        Method to call query-creator for data import
+
+        :param query_type: type of data import
+        :param query_data: data to import
+        """
         query_builders = {
             'rooms': self.get_import_query_rooms,
             'students': self.get_import_query_students
@@ -40,22 +47,32 @@ class Database:
         return query_builders[query_type](query_data)
 
     @staticmethod
-    def get_import_query_students(student_data: dict) -> str:
+    def get_import_query_students(student_data: list[dict]) -> str:
+        """
+        Method to create query to import student data into database
+
+        :param student_data: student data for import
+        """
         base_query = 'INSERT INTO student_classes.students (id, birthday, name, roomId, sex) VALUES \n'
         values_query = ''
         for student in student_data:
-            values_query += (f',\n({student['id']}, \'{student['birthday']}\', \'{student['name']}\', '
-                             f'{student['room']}, \'{student['sex']}\')')
+            values_query += (f",\n({student['id']}, \'{student['birthday']}\', \'{student['name']}\', "
+                             f"{student['room']}, \'{student['sex']}\')")
 
         query = base_query + values_query[1:]
         return query
 
     @staticmethod
-    def get_import_query_rooms(room_data: dict) -> str:
+    def get_import_query_rooms(room_data: list[dict]) -> str:
+        """
+        Method to create query to import room data into database
+
+        :param room_data: room data for import
+        """
         base_query = 'INSERT INTO student_classes.rooms (id, name) VALUES \n'
         values_query = ''
         for room in room_data:
-            values_query += f',\n({room['id']}, \'{room['name']}\')'
+            values_query += f",\n({room['id']}, \'{room['name']}\')"
 
         query = base_query + values_query[1:]
         return query
@@ -80,6 +97,9 @@ class Database:
         self.connection.close()
 
     def get_data_for_export(self, query: str) -> list[dict]:
+        """
+        Method for data extraction for report
+        """
         self.connection.connect()
         cursor = self.connection.cursor(dictionary=True)
         cursor.execute(query)
@@ -89,6 +109,9 @@ class Database:
 
     @staticmethod
     def get_export_query(export_type: str) -> str:
+        """
+        Method to create data export query
+        """
         query_selector = {
             'count': queries.get_count_query,
             'average': queries.get_avg_query,

@@ -1,8 +1,3 @@
-CONNECTION_SETTINGS = {
-    'user': 'root',
-    'password': 'root',
-    'host': '127.0.0.1',
-    'database': 'student_classes'
-}
+from connection_config import CONNECTION_SETTINGS
 
 EXPORT_TYPES = ['count', 'average', 'difference', 'sex']
