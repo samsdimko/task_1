@@ -15,6 +15,7 @@ def start_message():
         print('Write python main.py --help to get usage information')
         sys.exit(0)
     if sys.argv[1] == '--help' or sys.argv[1] == '-h' or sys.argv[1] == 'help':
+        # недочет. можно накинуть стрингу в переменную и с помощью \n переводить строку. ТЫ НЕ ЗНАЕШЬ КАК ЭКРАНИРУЮТСЯ СИМВОЛЫ???
         print('Usage: python main.py <action> [export_type] [file1_path] [file2_path] [export_file]')
         print('Actions:')
         print('  * help, --help, h: Get help usage message')
@@ -35,6 +36,7 @@ def start_message():
         sys.exit(0)
 
     if len(sys.argv) > 4:
+        # same stuff
         print('Usage: python main.py <action> [export_type] [file1_path] [file2_path] [export_file]')
         print('  write python main.py --help to get more details')
         sys.exit(0)
