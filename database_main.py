@@ -2,8 +2,8 @@ import mysql.connector
 from config import CONNECTION_SETTINGS, EXPORT_TYPES
 import json
 import queries
-import pandas as pd
-
+import ijson
+import os
 
 class Database(object):
     """
@@ -25,15 +25,66 @@ class Database(object):
         """
         self.connection.connect()
         cursor = self.connection.cursor()
-        chunks = pd.read_json(path, lines=True, chunksize=10000)
-        for chunk in chunks: 
-            query = self.get_import_query(import_table, chunk.to_dict('records'))
-            cursor.execute(query)
+
+        with open(path, 'r') as f:
+            """
+            Reading json_data in chunks using ijson-module
+            """
+            chunksize = 10000
+            record_index = 0
+            record_list = []
+            records = ijson.items(f, 'item')
+            for record in records:
+                record_list.append(record)
+                if record_index == chunksize:
+                    record_index = 0
+                    query = QueryBuilder.get_import_query(import_table, record_list)
+                    cursor.execute(query)
+                    record_list = []
+            else:
+                if len(record_list) > 0:
+                    query = QueryBuilder.get_import_query(import_table, record_list)
+                    cursor.execute(query)
         cursor.close()
         self.connection.commit()
         self.connection.close()
 
-    def get_import_query(self, query_type: str, query_data: list[dict]) -> str:
+    def export_data(self, path: str, export_report: str):
+        """
+        Method to import data into database
+
+        :param path: path to export file
+        :param export_report: type of report to export
+        """
+        export_data_dict = dict()
+        if export_report == 'all':
+            for export_type in EXPORT_TYPES:
+                export_data_dict[export_type] = self.get_data_for_export(
+                    QueryBuilder.get_export_query(export_type))
+        else:
+            export_data_dict[export_report] = self.get_data_for_export(
+                QueryBuilder.get_export_query(export_report))
+
+        with open(path, 'w') as f:
+            json.dump(export_data_dict, f)
+
+        self.connection.close()
+
+    def get_data_for_export(self, query: str) -> list[dict]:
+        """
+        Method for data extraction for report
+        """
+        self.connection.connect()
+        cursor = self.connection.cursor(dictionary=True)
+        cursor.execute(query)
+        data = cursor.fetchall()
+        cursor.close()
+        return data
+
+
+class QueryBuilder(object):
+    @staticmethod
+    def get_import_query(query_type: str, query_data: list[dict]) -> str:
         """
         Method to call query-creator for data import
 
@@ -41,8 +92,8 @@ class Database(object):
         :param query_data: data to import
         """
         query_builders = {
-            'rooms': self.get_import_query_rooms,
-            'students': self.get_import_query_students
+            'rooms': QueryBuilder.get_import_query_rooms,
+            'students': QueryBuilder.get_import_query_students
         }
         return query_builders[query_type](query_data)
 
@@ -76,36 +127,6 @@ class Database(object):
 
         query = base_query + values_query[1:]
         return query
-
-    def export_data(self, path: str, export_report: str):
-        """
-        Method to import data into database
-
-        :param path: path to export file
-        :param export_report: type of report to export
-        """
-        export_data_dict = dict()
-        if export_report == 'all':
-            for export_type in EXPORT_TYPES:
-                export_data_dict[export_type] = self.get_data_for_export(self.get_export_query(export_type))
-        else:
-            export_data_dict[export_report] = self.get_data_for_export(self.get_export_query(export_report))
-
-        with open(path, 'w') as f:
-            json.dump(export_data_dict, f)
-
-        self.connection.close()
-
-    def get_data_for_export(self, query: str) -> list[dict]:
-        """
-        Method for data extraction for report
-        """
-        self.connection.connect()
-        cursor = self.connection.cursor(dictionary=True)
-        cursor.execute(query)
-        data = cursor.fetchall()
-        cursor.close()
-        return data
 
     @staticmethod
     def get_export_query(export_type: str) -> str:
