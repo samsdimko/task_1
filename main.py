@@ -8,12 +8,11 @@ logging.basicConfig(level=logging.INFO, filename="py_log.log", filemode="a",
 
 
 def main(database_action_info: dict):
-    database = database_main.Database()
-
     if database_action_info['action'] == 'import':
         try:
-            database.import_data(database_action_info['rooms_path'], 'rooms')
-            database.import_data(database_action_info['students_path'], 'students')
+            with database_main.Database() as database:
+                database.import_data(database_action_info['rooms_path'], 'rooms')
+                database.import_data(database_action_info['students_path'], 'students')
             logging.info('Import is successful')
         except (IOError, ImportError) as e:
             logging.error(f'Import error: \n{e}')
@@ -21,7 +20,8 @@ def main(database_action_info: dict):
 
     elif database_action_info['action'] == 'export':
         try:
-            database.export_data(database_action_info['export_path'], database_action_info['export_type'])
+            with database_main.Database() as database:
+                database.export_data(database_action_info['export_path'], database_action_info['export_type'])
             logging.info('Export is successful')
         except IOError as e:
             logging.error('Export failed')

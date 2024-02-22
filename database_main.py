@@ -3,18 +3,32 @@ from config import CONNECTION_SETTINGS, EXPORT_TYPES
 import json
 import queries
 import ijson
-import os
+
 
 class Database(object):
     """
     Class which is used as implementation for database usage
     """
     def __init__(self):
+        self.connector = None
+
+    def __enter__(self):
         try:
-            self.connection = mysql.connector.connect(**CONNECTION_SETTINGS)
+            self.connector = mysql.connector.connect(**CONNECTION_SETTINGS)
+            return self
         except mysql.connector.Error as e:
             raise ConnectionError from e
-        self.connection.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if self.connector and self.connector.is_connected():
+                if exc_type is None:
+                    self.connector.commit()
+                else:
+                    self.connector.rollback()
+        finally:
+            if self.connector:
+                self.connector.close()
 
     def import_data(self, path: str, import_table: str):
         """
@@ -23,8 +37,7 @@ class Database(object):
         :param path: path to import file
         :param import_table: table to import
         """
-        self.connection.connect()
-        cursor = self.connection.cursor()
+        cursor = self.connector.cursor()
 
         with open(path, 'r') as f:
             """
@@ -46,8 +59,6 @@ class Database(object):
                     query = QueryBuilder.get_import_query(import_table, record_list)
                     cursor.execute(query)
         cursor.close()
-        self.connection.commit()
-        self.connection.close()
 
     def export_data(self, path: str, export_report: str):
         """
@@ -68,14 +79,11 @@ class Database(object):
         with open(path, 'w') as f:
             json.dump(export_data_dict, f)
 
-        self.connection.close()
-
     def get_data_for_export(self, query: str) -> list[dict]:
         """
         Method for data extraction for report
         """
-        self.connection.connect()
-        cursor = self.connection.cursor(dictionary=True)
+        cursor = self.connector.cursor(dictionary=True)
         cursor.execute(query)
         data = cursor.fetchall()
         cursor.close()
