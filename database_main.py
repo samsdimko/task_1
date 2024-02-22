@@ -91,6 +91,9 @@ class Database(object):
 
 
 class QueryBuilder(object):
+    """
+    Class which is used to create SQL queries for database
+    """
     @staticmethod
     def get_import_query(query_type: str, query_data: list[dict]) -> str:
         """
